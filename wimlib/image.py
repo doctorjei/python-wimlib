@@ -1,7 +1,7 @@
 import logging
 
 from wimlib import _backend
-from wimlib.error import WIMError
+from wimlib.error import WimException
 from datetime import datetime, timedelta
 
 
@@ -53,7 +53,7 @@ class ImageCollection(object):
         ret = _backend.lib.wimlib_add_empty_image(
             self._wim_struct, name, _backend.ffi.NULL)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
         return self.refresh(True)
 
 
@@ -62,7 +62,7 @@ class ImageCollection(object):
         ret = _backend.lib.wimlib_add_image(
             self._wim_struct, source, name, config, flags)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
         return self.refresh(True)
 
 
@@ -80,7 +80,7 @@ class ImageCollection(object):
                 "Error: Argument image must be of type int() or Image()")
         ret = _backend.lib.wimlib_delete_image(self._wim_struct, image)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def is_name_in_use(self, name):
@@ -150,7 +150,7 @@ class Image(object):
         ret = _backend.lib.wimlib_set_image_name(
             self._wim_struct, self.index, value)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     @property
@@ -167,7 +167,7 @@ class Image(object):
         ret = _backend.lib.wimlib_set_image_descripton(
             self._wim_struct, self.index, value)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     @property
@@ -197,7 +197,7 @@ class Image(object):
         ret = _backend.lib.wimlib_set_image_property(
             self._wim_struct, self.index, property_name, value)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def set_flags(self, flags):
@@ -205,7 +205,7 @@ class Image(object):
         ret = _backend.lib.wimlib_set_image_flags(
             self._wim_struct, self.index, flags)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def mount(self, mount_dir, flags=0, staging_dir=_backend.ffi.NULL):
@@ -213,7 +213,7 @@ class Image(object):
         ret = _backend.lib.wimlib_mount_image(
             self._wim_struct, self.index, mount_dir, flags, staging_dir)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
         self.mounts.append(mount_dir)
 
 
@@ -222,7 +222,7 @@ class Image(object):
         if not progress_func:
             ret = _backend.lib.wimlib_unmount_image(mount_dir, flags)
             if ret:
-                raise WIMError(ret)
+                raise WimException(ret)
         else:
             self._unmount_with_progress(mount_dir, flags, callback, context)
         self.mounts.remove(mount_dir)
@@ -240,7 +240,7 @@ class Image(object):
         ret = _backend.lib.wimlib_unmount_image_with_progress(
             mount_dir, flags, callback_wrapper, context)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def add_tree(self, source_path, target_path, flags):
@@ -248,7 +248,7 @@ class Image(object):
         ret = _backend.lib.wimlib_add_tree(
             self._wim_struct, self.index, source_path, target_path, flags)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def rename_path(self, source_path, target_path):
@@ -256,7 +256,7 @@ class Image(object):
         ret = _backend.lib.wimlib_rename_path(
             self._wim_struct, self.index, source_path, target_path)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def delete_path(self, path, flags):
@@ -264,7 +264,7 @@ class Image(object):
         ret = _backend.lib.wimlib_delete_path(
             self._wim_struct, self.index, path, flags)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def iterate_dir_tree(self, path, flags, callback, context=None):
@@ -280,7 +280,7 @@ class Image(object):
         ret = _backend.lib.wimlib_iterate_dir_tree(
             self._wim_struct, self.index, path, flags, callback_wrapper, context)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def update(self, commands, flags):
@@ -293,7 +293,7 @@ class Image(object):
         ret = _backend.lib.wimlib_extract_image(
             self._wim_struct, self.index, target, flags)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     # TODO: Add wimlib_extract_image_from_pipe and wimlib_extract_image_from_pipe_with_progress
@@ -304,7 +304,7 @@ class Image(object):
         ret = _backend.lib.wimlib_extract_paths(
             self._wim_struct, self.index, target, paths_array, len(paths), flags)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def extract_pathlist(self, target, pathlist_file, flags):
@@ -312,7 +312,7 @@ class Image(object):
         ret = _backend.lib.wimlib_extract_pathlist(
             self._wim_struct, self.index, target, pathlist_file, flags)
         if ret:
-            raise WIMError(ret)
+            raise WimException(ret)
 
 
     def export_image(self, ex_target, ex_name=None, ex_desc=None, flags=0):
@@ -326,7 +326,7 @@ class Image(object):
 
         if _backend.lib.wimlib_export_image(self._wim_struct,
           self.index, ex_target._wim_struct, ex_name, ex_desc, flags):
-            raise WIMError(ret)
+            raise WimException(ret)
 
         self._wim_obj.images.refresh()
 
