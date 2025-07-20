@@ -1,7 +1,25 @@
 import logging
 
+import wimlib
 from wimlib import _lib, _ffi, WimException
 from datetime import datetime, timedelta
+import subprocess
+
+# Mount flags
+MOUNT_READWRITE =                0x00000001
+MOUNT_DEBUG =                    0x00000002
+MOUNT_STREAM_INTERFACE_NONE =    0x00000004
+MOUNT_STREAM_INTERFACE_XATTR =   0x00000008
+MOUNT_STREAM_INTERFACE_WINDOWS = 0x00000010
+MOUNT_UNIX_DATA =                0x00000020
+MOUNT_ALLOW_OTHER =              0x00000040
+
+UNMOUNT_CHECK_INTEGRITY =        0x00000001
+UNMOUNT_COMMIT =                 0x00000002
+UNMOUNT_REBUILD =                0x00000004
+UNMOUNT_RECOMPRESS =             0x00000008
+UNMOUNT_FORCE =                  0x00000010
+UNMOUNT_NEW_IMAGE =              0x00000020
 
 
 class ImageCollection(object):
@@ -169,7 +187,7 @@ class Image(object):
     def size(self):
         """ Get the size of the image """
         try:
-          return int(self.get_property(b"TOTALBYTES"))
+          return int(self.get_property("TOTALBYTES"))
         except:
           -1
 
@@ -177,18 +195,18 @@ class Image(object):
     @size.setter
     def size(self, value):
         """ Set the size of the image """
-        self.set_property(self, b"TOTALBYTES", value)
+        self.set_property(self, "TOTALBYTES", value)
 
 
     def get_property(self, name):
         """ Get a property from the XML metadata for the image """
-        val = _lib.wimlib_get_image_property(self._wim_struct, self.index, name)
+        val = _lib.wimlib_get_image_property(self._wim_struct, self.index, str(name).encode())
         return _ffi.string(val) if val else ""
 
 
     def set_property(self, name, val):
         """ Set a property in the XML metadata for the image """
-        if (ret := _lib.wimlib_set_image_property(self._wim_struct, self.index, name, val)):
+        if (ret := _lib.wimlib_set_image_property(self._wim_struct, self.index, str(name).encode(), val)):
             raise WimException(ret)
 
 
@@ -200,10 +218,37 @@ class Image(object):
 
     def mount(self, mount, flags=0, staging=_ffi.NULL):
         """ Mount the image in the specified target directory """
-        mount = str(mount).encode()
-        staging = str(staging).encode() if staging else staging
+        mount = str(mount)
+        staging = str(staging) if staging else staging
+        logging.debug(f"Mounting {self.index} at {mount}; staging {staging}, flags={flags}.")
+        mount_params = [f"{self._wim_obj.path}", f"{self.index}", mount]
 
-        if (ret := _lib.wimlib_mount_image(self._wim_struct, self.index, mount, flags, staging)):
+        if wimlib._use_executable_mount:
+            if flags & MOUNT_READWRITE or staging:
+                  command = ["wimmountrw"] + mount_params + [f"--staging-dir={staging}"]
+            else:
+                  command = ["wimmount"] + mount_params
+
+            if flags & MOUNT_STREAM_INTERFACE_NONE:
+                  command.append("--streams-interface=none")
+            elif flags & MOUNT_STREAM_INTERFACE_XATTR:
+                  command.append("--streams-interface=xattr")
+            elif flags & MOUNT_STREAM_INTERFACE_WINDOWS:
+                  command.append("--streams-interface=windows")
+
+            if flags & MOUNT_UNIX_DATA:
+                  command.append("--unix-data")
+            if flags & MOUNT_ALLOW_OTHER:
+                  command.append("--allow-other")
+            #MOUNT_DEBUG =                    0x00000002
+            print(command)
+            ret = subprocess.run(command).returncode
+        else:
+            mount = mount.encode()
+            staging = stagfing.encode() if staging else staging
+            ret = _lib.wimlib_mount_image(self._wim_struct, self.index, mount, flags, staging)
+
+        if (ret):
             raise WimException(ret)
 
         self.mounts.append(mount)
