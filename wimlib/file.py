@@ -96,6 +96,20 @@ class WIMFile(object):
         raise NotImplementedError()
 
 
+    def reference_template(self, new_index, template_image, template_wim=None, flags=0):
+        """ Declare that newly added image as mostly the same as a prior one -
+            i.e., reference an existing template image."""
+        if not template_wim and not isinstance(template_image, Image):
+            raise ValueError("Error: Image() instance or template_wim required.")
+
+        if isinstance(template_image, Image):
+            template_wim = template_image._wim_struct
+
+        if (ret := _backend.lib.wimlib_reference_template_image(self._wim_struct,
+                     new_index, template_wim._wim_struct, int(template_image), flags)):
+            raise WIMError(ret)
+
+
     @property
     def info(self):
         """ Get information about this WIM """
@@ -110,11 +124,8 @@ class WIMFile(object):
     @info.setter
     def info(self, value):
         if not isinstance(value, wimlib.info.Info):
-            raise ValueError(
-                "Error: property info sould be set to type of Info().")
-        ret = _backend.lib.wimlib_set_wim_info(
-            self._wim_struct, value._info_struct)
-        if ret:
+            raise ValueError("Error: property info sould be set to type of Info().")
+        if (ret := _backend.lib.wimlib_set_wim_info(self._wim_struct, value._info_struct)):
             raise WIMError(ret)
 
 
@@ -123,9 +134,7 @@ class WIMFile(object):
         """ Get the XML data from the file """
         out_buffer = _backend.ffi.new("void**")
         out_size = _backend.ffi.new("size_t*")
-        ret = _backend.lib.wimlib_get_xml_data(
-            self._wim_struct, out_buffer, out_size)
-        if ret:
+        if (ret := _backend.lib.wimlib_get_xml_data(self._wim_struct, out_buffer, out_size)):
             raise WIMError(ret)
         return bytes(_backend.ffi.buffer(_backend.ffi.cast("char*", out_buffer[0]), out_size[0]))
 
@@ -140,37 +149,34 @@ class WIMFile(object):
 
 
     def verify(self, flags):
-        ret = _backend.lib.wimlib_verify_wim(self._wim_struct, flags)
-        if ret:
+        if (ret := _backend.lib.wimlib_verify_wim(self._wim_struct, flags)):
             raise WIMError(ret)
 
-    def split(self, swm_name, part_size, flags):
-        ret = _backend.lib.wimlib_split(self._wim_struct, swm_name, part_size, write_flags)
-        if ret:
+
+    def split(self, name, size, flags):
+        if (ret := _backend.lib.wimlib_split(self._wim_struct, name, size, flags)):
             raise WIMError(ret)
 
 
     def set_output_pack_compression_type(self, compression_type):
-        ret = _backend.lib.wimlib_set_output_pack_compression_type(self._wim_struct, compression_type)
-        if ret:
+        if (ret := _backend.lib.wimlib_set_output_pack_compression_type(
+                                           self._wim_struct, compression_type)):
             raise WIMError(ret)
 
 
     def set_output_pack_chunk_size(self, chunk_size):
-        ret = _backend.lib.wimlib_set_output_pack_chunk_size(self, chunk_size)
-        if ret:
+        if (ret := _backend.lib.wimlib_set_output_pack_chunk_size(self, chunk_size)):
             raise WIMError(ret)
 
 
     def set_output_compression_type(self, compression_type):
-        ret = _backend.lib.wimlib_set_output_compression_type(self._wim_struct, compression_type)
-        if ret:
+        if (ret := _backend.lib.wimlib_set_output_compression_type(
+                                     self._wim_struct, compression_type)):
             raise WIMError(ret)
 
 
     def set_output_chunk_size(self, chunk_size):
-        ret = _backend.lib.wimlib_set_output_chunk_size(self._wim_struct, chunk_size)
-        if ret:
+        if (ret := _backend.lib.wimlib_set_output_chunk_size(self._wim_struct, chunk_size)):
             raise WIMError(ret)
 
 
@@ -181,8 +187,7 @@ class WIMFile(object):
             # TODO: Cast resource_entry to a pythonic object instead of C struct.
             ret_val = callback(resource_entry, user_context)
             return ret_val if ret_val is not None else 0
-        context = _backend.ffi.new_handle(context)
-        ret = _backend.lib.wimlib_iterate_lookup_table(self._wim_struct, flags, callback_wrapper, context)
-        if ret:
+
+        if _backend.lib.wimlib_iterate_lookup_table(
+          self._wim_struct, flags, __wrapper, _backend.ffi.new_handle(context)):
             raise WIMError(ret)
-            

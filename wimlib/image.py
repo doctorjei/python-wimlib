@@ -23,6 +23,11 @@ class ImageCollection(object):
 
 
     @property
+    def listing(self):
+        return "\n".join([image.listing for image in self.images.values()])
+
+
+    @property
     def _wim_struct(self):
         return self._wim_obj._wim_struct
 
@@ -81,7 +86,16 @@ class ImageCollection(object):
         return None if not ret else ret
 
 
+    def keys(self):
+        return self.images.keys()
 
+
+    def values(self):
+        return self.images.values()
+
+
+    def items(self):
+        return self.images.items()
 
 
 class Image(object):
@@ -89,25 +103,6 @@ class Image(object):
     This class represents an image inside a WIM file.
     All function to do with image content manupulation are here.
     """
-    def reference_template(self, image, template_image, template_wim=None,
-     flags=0):
-        """ Declare that a newly added image is mostly the same as a prior"""
-        """ image. """
-        if not template_wim and not isinstance(template_image, Image):
-            raise ValueError(
-                "Error: template_image must be instance of Image() if no"
-                " template_wim defined.")
-
-        if isinstance(template_image, Image):
-            template_wim = template_image._wim_struct
-
-        ret = _backend.lib.wimlib_reference_template_image(
-            self._wim_struct, image, template_wim._wim_struct,
-                           int(template_image), flags)
-        if ret:
-            raise WIMError(ret)
-
-
     def __init__(self, index, wim_obj):
         self.index = index
         self._wim_obj = wim_obj
@@ -117,6 +112,14 @@ class Image(object):
     def __int__(self):
         """ Returns the Image.index on cast to int() """
         return self.index
+
+
+    @property
+    def listing(self):
+        return (f"ImageIndex       : {self.index}\n"
+                f"ImageName        : {self.name.decode()}\n"
+                f"ImageDescription : {self.description.decode()}\n"
+                f"ImageSize        : {self.size:,}\n")
 
 
     @property
@@ -157,6 +160,21 @@ class Image(object):
             self._wim_struct, self.index, value)
         if ret:
             raise WIMError(ret)
+
+
+    @property
+    def size(self):
+        """ Get the size of the image """
+        try:
+          return int(self.get_property(b"TOTALBYTES"))
+        except:
+          -1
+
+
+    @size.setter
+    def size(self, value):
+        """ Set the size of the image """
+        self.set_property(self, b"TOTALBYTES", value)
 
 
     def get_property(self, property_name):
@@ -434,4 +452,3 @@ class DirEntry(object):
     @property
     def streams(self):
         return self._dentry.streams
-
