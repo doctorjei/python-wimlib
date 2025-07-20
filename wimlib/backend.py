@@ -36,9 +36,9 @@ def set_error_file_by_handle(self, file):
     raise NotImplementedError("Error: wimlib functions with FILE* argument not supported yet")
 
 
-class WIMBackend(object):
+class WimBackend(object):
     """
-    WIMBackend
+    WimBackend
 
     This class creates the ffi and lib objects used by other wimlib
     classes. This class is for internal use only.

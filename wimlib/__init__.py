@@ -1,8 +1,8 @@
 import atexit
-from wimlib.backend import WIMBackend
+from wimlib.backend import WimBackend
 
 __version__ = "0.1.2"
-_backend = WIMBackend()
+_backend = WimBackend()
 
 
 def wimlib_version():

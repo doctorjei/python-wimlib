@@ -12,7 +12,7 @@ NO_IMAGE = 0
 ALL_IMAGES = -1
 
 
-class WIMFile(object):
+class WimFile(object):
     def __del__(self):
         _backend.lib.wimlib_free(self._wim_struct)
 
@@ -32,17 +32,17 @@ class WIMFile(object):
     @staticmethod
     def new(compression=0):
         loader = lambda s: _backend.lib.wimlib_create_new_wim(compression, s)
-        return WIMFile(loader)
+        return WimFile(loader)
 
 
     @staticmethod
     def from_file(path, flags=0, callback=None, context=None):
         path = path.encode() if type(path) is str else path
         if not callback:
-            logging.debug(f"Loading WIMFile from {path}, non-progressive loader.")
+            logging.debug(f"Loading WimFile from {path}, non-progressive loader.")
             loader = lambda s: _backend.lib.wimlib_open_wim(path, flags, s)
         else:
-            logging.debug(f"Loading WIMFile from {path}, progressive loader.")
+            logging.debug(f"Loading WimFile from {path}, progressive loader.")
             @_backend.ffi.callback("enum wimlib_progress_status(enum wimlib_progress_msg, union wimlib_progress_info*, void*)")
             def __wrapper(progress_msg, progress_info, user_context):
                 user_context = _backend.ffi.from_handle(user_context)
@@ -52,7 +52,7 @@ class WIMFile(object):
             context = _backend.ffi.new_handle(context)
             loader = lambda s: _backend.lib.wimlib_open_wim_with_progress(path,
                                                      flags, s, __wrapper, context)
-        return WIMFile(loader, path, flags)
+        return WimFile(loader, path, flags)
 
 
     def write(self, fd=None, image=ALL_IMAGES, write_flags=None, threads=4):
@@ -81,7 +81,7 @@ class WIMFile(object):
         """ Reference sources in other WIMs """
         # Filter resources into groups of files and wim objects
         wim_resources = list(filter(lambda res: isinstance(
-            res, WIMFile), self.reference_resources))
+            res, WimFile), self.reference_resources))
         file_resources = list(
             filter(lambda res: isinstance(res, str), self.reference_resources))
         self._reference_resource_files(file_resources, ref_flags, wim_flags)

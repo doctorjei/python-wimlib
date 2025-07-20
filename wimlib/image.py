@@ -37,7 +37,7 @@ class ImageCollection(object):
     def refresh(self, return_last=False):
         """ Refresh the objects image list """
         logging.debug(f"Refreshing image collection for {self._wim_obj}.")
-        logging.debug(f"WIMFile Info: {self._wim_obj.info}")
+        logging.debug(f"WimFile Info: {self._wim_obj.info}")
         logging.debug(f"Image Count: {self._wim_obj.info.image_count}")
 
         for index in range(1, self._wim_obj.info.image_count + 1):
