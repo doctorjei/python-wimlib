@@ -2,7 +2,7 @@ import cffi
 import platform
 import ctypes.util
 
-fromt c_defs import WIMLIB_DEFAULT_CDEFS
+from wimlib.c_defs import WIMLIB_DEFAULT_CDEFS
 
 # Init flags for wimlib_global_init
 INIT_FLAG_DONT_ACQUIRE_PRIVILEGES = 0x00000002  # Windows only
