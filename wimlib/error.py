@@ -83,20 +83,3 @@ class WIMError(Exception):
             super(WIMError, self).__init__(get_error_string(self.error))
         else:
             super(WIMError, self).__init__(self.error)
-
-
-def get_error_string(error_num):
-    return _backend.ffi.string(_backend.lib.wimlib_get_error_string(error_num))
-
-
-def set_error_printing(self, state):
-    if (ret := _backend.lib.wimlib_set_print_errors(bool(state))):
-        raise WIMError(ret)
-
-
-def set_error_file_by_name(self, file_path):
-    if (ret := _backend.lib.wimlib_set_error_file_by_name(file_path)):
-        raise WIMError(ret)
-
-def set_error_file_by_handle(self, file):
-    raise NotImplementedError("Error: wimlib functions with FILE* argument not supported yet")

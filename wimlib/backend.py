@@ -4,16 +4,36 @@ import ctypes.util
 
 fromt c_defs import WIMLIB_DEFAULT_CDEFS
 
+# Init flags for wimlib_global_init
+INIT_FLAG_DONT_ACQUIRE_PRIVILEGES = 0x00000002  # Windows only
+INIT_FLAG_STRICT_CAPTURE_PRIVILEGES = 0x00000004  # Windown only
+INIT_FLAG_STRICT_APPLY_PRIVILEGES = 0x00000008  # Windows only
+INIT_FLAG_DEFAULT_CASE_SENSITIVE = 0x00000010
+INIT_FLAG_DEFAULT_CASE_INSENSITIVE = 0x00000020
 
 
+def global_init(init_flags=0):
+    """ Initialization for wimlib; called with flags=0 when any other function is invoked"""
+    if (ret := _backend.lib.wimlib_global_init(flags)):
+        raise WIMError(ret)
 
 
+def get_error_string(error_num):
+    return _backend.ffi.string(_backend.lib.wimlib_get_error_string(error_num))
 
 
+def set_error_printing(self, state):
+    if (ret := _backend.lib.wimlib_set_print_errors(bool(state))):
+        raise WIMError(ret)
 
 
+def set_error_file_by_name(self, file_path):
+    if (ret := _backend.lib.wimlib_set_error_file_by_name(file_path)):
+        raise WIMError(ret)
 
 
+def set_error_file_by_handle(self, file):
+    raise NotImplementedError("Error: wimlib functions with FILE* argument not supported yet")
 
 
 class WIMBackend(object):

@@ -20,6 +20,13 @@ def shutdown():
     _backend.lib.wimlib_global_cleanup()
 
 
+class WIMError(Exception):
+    def __init__(self, error):
+        self.error = error
+        if type(error) == int:
+            super(WIMError, self).__init__(get_error_string(self.error))
+        else:
+            super(WIMError, self).__init__(self.error)
 
 
 def join():
