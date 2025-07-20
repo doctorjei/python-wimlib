@@ -4,8 +4,8 @@ import wimlib
 import wimlib.image
 import wimlib.info
 
+from wimlib import WimException
 from wimlib import _backend
-from wimlib.error import WimException
 
 # Image specificaion consts
 NO_IMAGE = 0

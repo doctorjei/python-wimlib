@@ -1,7 +1,6 @@
 import logging
 
-from wimlib import _backend
-from wimlib.error import WimException
+from wimlib import _backend, WimException
 from datetime import datetime, timedelta
 
 

@@ -1,5 +1,4 @@
-from wimlib import _backend
-from wimlib.error import WimException
+from wimlib import _backend, WimException
 
 COMPRESSOR_FLAG_DESTRUCTIVE = 0x80000000
 COMPRESSION_TYPE_NONE = 0
