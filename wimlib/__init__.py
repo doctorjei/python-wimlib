@@ -1,17 +1,39 @@
-import atexit as _atexit
-from wimlib.backend import WIMBackend as _WIMBackend
+import atexit
+from wimlib.backend import WIMBackend
 
-__version__ = "0.0.0"
-
-_backend = _WIMBackend()
-ENCODING = _backend.encoding
-
-from wimlib.error import WIMError
-import wimlib.compression as compression
-import wimlib.info as info
-import wimlib.image as image
-import wimlib.file as file
-from wimlib._global import *
+__version__ = "0.1.2"
+_backend = WIMBackend()
 
 
-_atexit.register(global_cleanup)
+def wimlib_version():
+    """ Get wimlib version number as tuple of (MAJOR, MINOR, PATCH) """
+    ver = _backend.lib.wimlib_get_version()
+    return (ver >> 20, (ver >> 10) & 0x3ff, ver & 0x3ff)
+
+
+def initialize(init_flags=0):
+    atexit.register(shutdown)
+
+
+def shutdown():
+    """ Cleanup function for wimlib, call is optional. """
+    _backend.lib.wimlib_global_cleanup()
+
+
+
+
+def join():
+    raise NotImplementedError()
+
+
+def join_with_progress():
+    raise NotImplementedError()
+
+
+def set_memory_allocator():
+    raise NotImplementedError()
+
+
+initialize()
+
+

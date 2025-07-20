@@ -1,6 +1,8 @@
-from wimlib import _backend
+# Status consts - used as returns for progress callback
+PROGRESS_STATUS_CONTINUE = 0
+PROGRESS_STATUS_ABORT = 1
 
-# Progress message numbers - used to decide which progree info is valid
+# Progress message numbers - used to decide which progress info is valid
 PROGRESS_MSG_EXTRACT_IMAGE_BEGIN = 0
 PROGRESS_MSG_EXTRACT_TREE_BEGIN = 1
 PROGRESS_MSG_EXTRACT_FILE_STRUCTURE = 3
@@ -29,6 +31,3 @@ PROGRESS_MSG_DONE_WITH_FILE = 26
 PROGRESS_MSG_BEGIN_VERIFY_IMAGE = 27
 PROGRESS_MSG_END_VERIFY_IMAGE = 28
 PROGRESS_MSG_VERIFY_STREAMS = 29
-# Status consts - used as returns for progress callback
-PROGRESS_STATUS_CONTINUE = 0
-PROGRESS_STATUS_ABORT = 1

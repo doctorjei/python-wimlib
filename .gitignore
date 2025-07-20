@@ -3,4 +3,4 @@ temp/
 build/
 debug
 dist/
-pywimlib.egg-info/
+python_wimlib.egg-info/

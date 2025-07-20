@@ -1,4 +1,5 @@
-from wimlib import compression, _backend
+from wimlib import _backend
+from wimlib import compression
 import uuid
 
 CHANGE_READONLY_FLAG = 0x00000001
@@ -34,7 +35,7 @@ class Info(object):
 
     @property
     def guid(self):
-        return uuid.UUID(bytes=[chr(self._info_struct.guid[i]) for i in xrange(16)])
+        return uuid.UUID(bytes=[chr(self._info_struct.guid[i]) for i in range(16)])
 
     @guid.setter
     def guid(self, value):
@@ -74,58 +75,58 @@ class Info(object):
 
     @property
     def is_read_only(self):
-		"""
-		True if this WIM file is considered readonly for any reason
-		(e.g. "readonly" header flag, split WIM, filesystem permissions)
-		"""
-		return bool(self._info_struct.is_readonly)
+        """
+        True if this WIM file is considered readonly for any reason
+        (e.g. "readonly" header flag, split WIM, filesystem permissions)
+        """
+        return bool(self._info_struct.is_readonly)
 
     @property
     def metadata_only_flag(self):
-		"""True if the "metadata only" flag is set in this WIM's header"""
-		return bool(self._info_struct.metadata_only)
+        """True if the "metadata only" flag is set in this WIM's header"""
+        return bool(self._info_struct.metadata_only)
 
     @property
     def opened_from_file(self):
-		""" True if this info struct is for a WIMStruct that has a backing file  """
-		return bool(self._info_struct.opened_from_file)
+        """ True if this info struct is for a WIMStruct that has a backing file  """
+        return bool(self._info_struct.opened_from_file)
 
     @property
     def part_number(self):
-		""" For split WIMs, the 1-based index of this part within the split WIM; otherwise 1. """
-		return self._info_struct.part_number
+        """ For split WIMs, the 1-based index of this part within the split WIM; otherwise 1. """
+        return self._info_struct.part_number
 
     @property
     def is_pipeable(self):
-		"""True if this WIM file is pipable (see WIMLIB_WRITE_FLAG_PIPABLE)"""
-		return bool(self._info_struct.pipable)
+        """True if this WIM file is pipable (see WIMLIB_WRITE_FLAG_PIPABLE)"""
+        return bool(self._info_struct.pipable)
 
     @property
     def resource_only_flag(self):
-		""" True if the "resource only" flag is set in this WIM's header """
-		return self._info_struct.resource_only
+        """ True if the "resource only" flag is set in this WIM's header """
+        return self._info_struct.resource_only
 
     @property
     def is_spanned(self):
-		""" True if the "spanned" flag is set in this WIM's header """
-		return bool(self._info_struct.spanned)
+        """ True if the "spanned" flag is set in this WIM's header """
+        return bool(self._info_struct.spanned)
 
     @property
     def total_bytes(self):
-		""" The size of this WIM file in bytes, excluding the XML data and integrity table. """
-		return self._info_struct.total_bytes
+        """ The size of this WIM file in bytes, excluding the XML data and integrity table. """
+        return self._info_struct.total_bytes
 
     @property
     def total_parts(self):
-		""" For split WIMs, the total number of parts in the split WIM; otherwise 1. """
-		return self._info_struct.total_parts
+        """ For split WIMs, the total number of parts in the split WIM; otherwise 1. """
+        return self._info_struct.total_parts
 
     @property
     def wim_version(self):
-		""" The version of the WIM file format used in this WIM file. """
-		return self._info_struct.wim_version
+        """ The version of the WIM file format used in this WIM file. """
+        return self._info_struct.wim_version
 
     @property
     def write_in_progress_flag(self):
-		""" True if  the "write in progress" flag is set in this WIM's header. """
-		return bool(self._info_struct.write_in_progress)
+        """ True if  the "write in progress" flag is set in this WIM's header. """
+        return bool(self._info_struct.write_in_progress)

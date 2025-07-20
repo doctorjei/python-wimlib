@@ -5,9 +5,10 @@ long_description = """
 """
 
 setup(
-        name="pywimlib",
-        version="0.1.0",
+        name="python-wimlib",
+        version="0.1.2",
         description="Python bindings for wimlib (unofficial)",
+        long_description_content_type='text/plain',
         long_description=long_description,
         author="Gideon S. (0xGiddi)",
         author_email="elmocia@gmail.com",
