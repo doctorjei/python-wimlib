@@ -1,5 +1,3 @@
-from wimlib import _backend
-
 ERR_SUCCESS = 0
 ERR_ALREADY_LOCKED = 1
 ERR_DECOMPRESSION = 2
@@ -75,11 +73,3 @@ ERR_MOUNTED_IMAGE_IS_BUSY = 79
 ERR_NOT_A_MOUNTPOINT = 80
 ERR_NOT_PERMITTED_TO_UNMOUNT = 81
 
-
-class WIMError(Exception):
-    def __init__(self, error):
-        self.error = error
-        if type(error) == int:
-            super(WIMError, self).__init__(get_error_string(self.error))
-        else:
-            super(WIMError, self).__init__(self.error)
