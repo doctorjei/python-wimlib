@@ -198,46 +198,52 @@ class Image(object):
             raise WimException(ret)
 
 
-    def mount(self, mnt_dir, flags=0, staging=_ffi.NULL):
+    def mount(self, mount, flags=0, staging=_ffi.NULL):
         """ Mount the image in the specified target directory """
-        if (ret := _lib.wimlib_mount_image(self._wim_struct, self.index, mnt_dir, flags, staging)):
+        mount = str(mount).encode()
+        staging = str(staging).encode() if staging else staging
+
+        if (ret := _lib.wimlib_mount_image(self._wim_struct, self.index, mount, flags, staging)):
             raise WimException(ret)
 
-        self.mounts.append(mnt_dir)
+        self.mounts.append(mount)
 
 
-    def unmount(self, mount_dir, flags=0, progress_func=None, progress_context=None):
+    def unmount(self, mount, flags=0, progress_func=None, progress_context=None):
         """ Unmount the mounted image in the specified directory. """
+        mount = str(mount).encode()
+
         if not progress_func:
-            if (ret := _lib.wimlib_unmount_image(mount_dir, flags)):
+            if (ret := _lib.wimlib_unmount_image(mount, flags)):
                 raise WimException(ret)
         else:
-            self._unmount_with_progress(mount_dir, flags, callback, context)
-        self.mounts.remove(mount_dir)
+            self._unmount_with_progress(mount, flags, callback, context)
+
+        self.mounts.remove(mount)
 
 
-    def _unmount_with_progress(self, mount_dir, flags, callback, context=None):
+    def _unmount_with_progress(self, mount, flags, callback, context=None):
         """ Like Image.unmount just with a progress function, For internal use only. """
         @_ffi.callback("enum wimlib_progress_status(enum wimlib_progress_msg, union wimlib_progress_info*, void*)")
-        def callback_wrapper(progress_msg, progress_info, user_context):
+        def __wrapper(progress_msg, progress_info, user_context):
             user_context = _ffi.from_handle(user_context)
             # TODO: Cast progress_info to a pythonic object instead of C union.
             ret_val = callback(progress_msg, progress_info, user_context)
             return ret_val if ret_val is not None else 0
         context = _ffi.new_handle(context)
-        if (ret := _lib.wimlib_unmount_image_with_progress(mount_dir, flags, callback_wrapper, context)):
+        if (ret := _lib.wimlib_unmount_image_with_progress(mount, flags, __wrapper, context)):
             raise WimException(ret)
 
 
-    def add_tree(self, source_path, target_path, flags):
+    def add_tree(self, source, target, flags):
         """ Add content to the image from the local filesystem """
-        if (ret := _lib.wimlib_add_tree(self._wim_struct, self.index, source_path, target_path, flags)):
+        if (ret := _lib.wimlib_add_tree(self._wim_struct, self.index, source, target, flags)):
             raise WimException(ret)
 
 
-    def rename_path(self, source_path, target_path):
+    def rename_path(self, source, target):
         """ Rename a pah inside the image """
-        if (ret := _lib.wimlib_rename_path(self._wim_struct, self.index, source_path, target_path)):
+        if (ret := _lib.wimlib_rename_path(self._wim_struct, self.index, source, target)):
             raise WimException(ret)
 
 
@@ -250,14 +256,14 @@ class Image(object):
     def iterate_dir_tree(self, path, flags, callback, context=None):
         """ Iterate over the files/directories in the image """
         @_ffi.callback("int(struct wimlib_dir_entry*, void*)")
-        def callback_wrapper(dir_entry, user_context):
+        def __wrapper(dir_entry, user_context):
             user_context = _ffi.from_handle(user_context)
             py_dentry = DirEntry(dir_entry)
             # TODO: Cast dir_entry into a more pythonic object instead of C struct.
             ret_val = callback(py_dentry, user_context)
             return ret_val if ret_val is not None else 0
         context = _ffi.new_handle(context)
-        if (ret := _lib.wimlib_iterate_dir_tree(self._wim_struct, self.index, path, flags, callback_wrapper, context)):
+        if (ret := _lib.wimlib_iterate_dir_tree(self._wim_struct, self.index, path, flags, __wrapper, context)):
             raise WimException(ret)
 
 
@@ -281,9 +287,9 @@ class Image(object):
             raise WimException(ret)
 
 
-    def extract_pathlist(self, target, pathlist_file, flags):
+    def extract_pathlist(self, target, list_file, flags):
         """ Like Image.extract_paths but pathlist is a file on the local filesystem"""
-        if (ret := _lib.wimlib_extract_pathlist(self._wim_struct, self.index, target, pathlist_file, flags)):
+        if (ret := _lib.wimlib_extract_pathlist(self._wim_struct, self.index, target, list_file, flags)):
             raise WimException(ret)
 
 
