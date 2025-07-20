@@ -14,21 +14,21 @@ INIT_FLAG_DEFAULT_CASE_INSENSITIVE = 0x00000020
 
 def global_init(init_flags=0):
     """ Initialization for wimlib; called with flags=0 when any other function is invoked"""
-    if (ret := _backend.lib.wimlib_global_init(flags)):
+    if (ret := _lib.wimlib_global_init(flags)):
         raise WimException(ret)
 
 
 def get_error_string(error_num):
-    return _backend.ffi.string(_backend.lib.wimlib_get_error_string(error_num))
+    return _ffi.string(_lib.wimlib_get_error_string(error_num))
 
 
 def set_error_printing(self, state):
-    if (ret := _backend.lib.wimlib_set_print_errors(bool(state))):
+    if (ret := _lib.wimlib_set_print_errors(bool(state))):
         raise WimException(ret)
 
 
 def set_error_file_by_name(self, file_path):
-    if (ret := _backend.lib.wimlib_set_error_file_by_name(file_path)):
+    if (ret := _lib.wimlib_set_error_file_by_name(file_path)):
         raise WimException(ret)
 
 

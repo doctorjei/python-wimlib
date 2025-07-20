@@ -1,6 +1,6 @@
 import logging
 
-from wimlib import _backend, WimException
+from wimlib import _lib, _ffi, WimException
 from datetime import datetime, timedelta
 
 
@@ -49,8 +49,8 @@ class ImageCollection(object):
 
     def add_empty(self, name=""):
         """ Add an empty image """
-        ret = _backend.lib.wimlib_add_empty_image(
-            self._wim_struct, name, _backend.ffi.NULL)
+        ret = _lib.wimlib_add_empty_image(
+            self._wim_struct, name, _ffi.NULL)
         if ret:
             raise WimException(ret)
         return self.refresh(True)
@@ -58,7 +58,7 @@ class ImageCollection(object):
 
     def add(self, source, name="", config="", flags=0):
         """ Add image from filesystem path """
-        ret = _backend.lib.wimlib_add_image(
+        ret = _lib.wimlib_add_image(
             self._wim_struct, source, name, config, flags)
         if ret:
             raise WimException(ret)
@@ -77,19 +77,19 @@ class ImageCollection(object):
         except ValueError:
             raise ValueError(
                 "Error: Argument image must be of type int() or Image()")
-        ret = _backend.lib.wimlib_delete_image(self._wim_struct, image)
+        ret = _lib.wimlib_delete_image(self._wim_struct, image)
         if ret:
             raise WimException(ret)
 
 
     def is_name_in_use(self, name):
         """ Check if image name is in use already (case sensitive) """
-        return _backend.lib.wimlib_image_name_in_use(self._wim_struct, name)
+        return _lib.wimlib_image_name_in_use(self._wim_struct, name)
 
 
     def resolve(self, name_or_num):
         """ Resolve a string name / number to image index (read docs for catches)"""
-        ret = _backend.lib.wimlib_resolve_image(self._wim_struct, name_or_num)
+        ret = _lib.wimlib_resolve_image(self._wim_struct, name_or_num)
         return None if not ret else ret
 
 
@@ -138,15 +138,14 @@ class Image(object):
     @property
     def name(self):
         """ Get the name of the image """
-        value = _backend.lib.wimlib_get_image_name(
-            self._wim_struct, self.index)
-        return _backend.ffi.string(value) if value else ""
+        value = _lib.wimlib_get_image_name(self._wim_struct, self.index)
+        return _ffi.string(value) if value else ""
 
 
     @name.setter
     def name(self, value):
         """ Set the name of the image """
-        ret = _backend.lib.wimlib_set_image_name(
+        ret = _lib.wimlib_set_image_name(
             self._wim_struct, self.index, value)
         if ret:
             raise WimException(ret)
@@ -155,17 +154,14 @@ class Image(object):
     @property
     def description(self):
         """ Get the description of the image """
-        value = _backend.lib.wimlib_get_image_description(
-            self._wim_struct, self.index)
-        return _backend.ffi.string(value) if value else ""
+        value = _lib.wimlib_get_image_description(self._wim_struct, self.index)
+        return _ffi.string(value) if value else ""
 
 
     @description.setter
-    def description(self, value):
+    def description(self, val):
         """ Set the description of the image """
-        ret = _backend.lib.wimlib_set_image_descripton(
-            self._wim_struct, self.index, value)
-        if ret:
+        if (ret := _lib.wimlib_set_image_descripton(self._wim_struct, self.index, val)):
             raise WimException(ret)
 
 
@@ -184,43 +180,36 @@ class Image(object):
         self.set_property(self, b"TOTALBYTES", value)
 
 
-    def get_property(self, property_name):
+    def get_property(self, name):
         """ Get a property from the XML metadata for the image """
-        value = _backend.lib.wimlib_get_image_property(
-            self._wim_struct, self.index, property_name)
-        return _backend.ffi.string(value) if value else ""
+        val = _lib.wimlib_get_image_property(self._wim_struct, self.index, name)
+        return _ffi.string(val) if val else ""
 
 
-    def set_property(self, property_name, value):
+    def set_property(self, name, val):
         """ Set a property in the XML metadata for the image """
-        ret = _backend.lib.wimlib_set_image_property(
-            self._wim_struct, self.index, property_name, value)
-        if ret:
+        if (ret := _lib.wimlib_set_image_property(self._wim_struct, self.index, name, val)):
             raise WimException(ret)
 
 
     def set_flags(self, flags):
         """ Set the FLAGS property in the XML metadata. This is like Image.set_property("FLAGS", value) """
-        ret = _backend.lib.wimlib_set_image_flags(
-            self._wim_struct, self.index, flags)
-        if ret:
+        if (ret := _lib.wimlib_set_image_flags(self._wim_struct, self.index, flags)):
             raise WimException(ret)
 
 
-    def mount(self, mount_dir, flags=0, staging_dir=_backend.ffi.NULL):
+    def mount(self, mnt_dir, flags=0, staging=_ffi.NULL):
         """ Mount the image in the specified target directory """
-        ret = _backend.lib.wimlib_mount_image(
-            self._wim_struct, self.index, mount_dir, flags, staging_dir)
-        if ret:
+        if (ret := _lib.wimlib_mount_image(self._wim_struct, self.index, mnt_dir, flags, staging)):
             raise WimException(ret)
-        self.mounts.append(mount_dir)
+
+        self.mounts.append(mnt_dir)
 
 
     def unmount(self, mount_dir, flags=0, progress_func=None, progress_context=None):
         """ Unmount the mounted image in the specified directory. """
         if not progress_func:
-            ret = _backend.lib.wimlib_unmount_image(mount_dir, flags)
-            if ret:
+            if (ret := _lib.wimlib_unmount_image(mount_dir, flags)):
                 raise WimException(ret)
         else:
             self._unmount_with_progress(mount_dir, flags, callback, context)
@@ -229,56 +218,46 @@ class Image(object):
 
     def _unmount_with_progress(self, mount_dir, flags, callback, context=None):
         """ Like Image.unmount just with a progress function, For internal use only. """
-        @_backend.ffi.callback("enum wimlib_progress_status(enum wimlib_progress_msg, union wimlib_progress_info*, void*)")
+        @_ffi.callback("enum wimlib_progress_status(enum wimlib_progress_msg, union wimlib_progress_info*, void*)")
         def callback_wrapper(progress_msg, progress_info, user_context):
-            user_context = _backend.ffi.from_handle(user_context)
+            user_context = _ffi.from_handle(user_context)
             # TODO: Cast progress_info to a pythonic object instead of C union.
             ret_val = callback(progress_msg, progress_info, user_context)
             return ret_val if ret_val is not None else 0
-        context = _backend.ffi.new_handle(context)
-        ret = _backend.lib.wimlib_unmount_image_with_progress(
-            mount_dir, flags, callback_wrapper, context)
-        if ret:
+        context = _ffi.new_handle(context)
+        if (ret := _lib.wimlib_unmount_image_with_progress(mount_dir, flags, callback_wrapper, context)):
             raise WimException(ret)
 
 
     def add_tree(self, source_path, target_path, flags):
         """ Add content to the image from the local filesystem """
-        ret = _backend.lib.wimlib_add_tree(
-            self._wim_struct, self.index, source_path, target_path, flags)
-        if ret:
+        if (ret := _lib.wimlib_add_tree(self._wim_struct, self.index, source_path, target_path, flags)):
             raise WimException(ret)
 
 
     def rename_path(self, source_path, target_path):
         """ Rename a pah inside the image """
-        ret = _backend.lib.wimlib_rename_path(
-            self._wim_struct, self.index, source_path, target_path)
-        if ret:
+        if (ret := _lib.wimlib_rename_path(self._wim_struct, self.index, source_path, target_path)):
             raise WimException(ret)
 
 
     def delete_path(self, path, flags):
         """ Delete a path inside the image """
-        ret = _backend.lib.wimlib_delete_path(
-            self._wim_struct, self.index, path, flags)
-        if ret:
+        if (ret := _lib.wimlib_delete_path(self._wim_struct, self.index, path, flags)):
             raise WimException(ret)
 
 
     def iterate_dir_tree(self, path, flags, callback, context=None):
         """ Iterate over the files/directories in the image """
-        @_backend.ffi.callback("int(struct wimlib_dir_entry*, void*)")
+        @_ffi.callback("int(struct wimlib_dir_entry*, void*)")
         def callback_wrapper(dir_entry, user_context):
-            user_context = _backend.ffi.from_handle(user_context)
+            user_context = _ffi.from_handle(user_context)
             py_dentry = DirEntry(dir_entry)
             # TODO: Cast dir_entry into a more pythonic object instead of C struct.
             ret_val = callback(py_dentry, user_context)
             return ret_val if ret_val is not None else 0
-        context = _backend.ffi.new_handle(context)
-        ret = _backend.lib.wimlib_iterate_dir_tree(
-            self._wim_struct, self.index, path, flags, callback_wrapper, context)
-        if ret:
+        context = _ffi.new_handle(context)
+        if (ret := _lib.wimlib_iterate_dir_tree(self._wim_struct, self.index, path, flags, callback_wrapper, context)):
             raise WimException(ret)
 
 
@@ -289,28 +268,22 @@ class Image(object):
 
     def extract(self, target, flags):
         """ Extract the image to the specified directory or unmounted NTFS volume """
-        ret = _backend.lib.wimlib_extract_image(
-            self._wim_struct, self.index, target, flags)
-        if ret:
+        if (ret := _lib.wimlib_extract_image(self._wim_struct, self.index, target, flags)):
             raise WimException(ret)
 
 
     # TODO: Add wimlib_extract_image_from_pipe and wimlib_extract_image_from_pipe_with_progress
     def extract_paths(self, target, paths, flags):
         """ Extract a list of paths from the image """
-        paths = [_backend.ffi.new("char[]", path) for path in paths]
-        paths_array = _backend.ffi.new("char*[]", paths)
-        ret = _backend.lib.wimlib_extract_paths(
-            self._wim_struct, self.index, target, paths_array, len(paths), flags)
-        if ret:
+        paths = [_ffi.new("char[]", path) for path in paths]
+        paths_array = _ffi.new("char*[]", paths)
+        if (ret := _lib.wimlib_extract_paths(self._wim_struct, self.index, target, paths_array, len(paths), flags)):
             raise WimException(ret)
 
 
     def extract_pathlist(self, target, pathlist_file, flags):
         """ Like Image.extract_paths but pathlist is a file on the local filesystem"""
-        ret = _backend.lib.wimlib_extract_pathlist(
-            self._wim_struct, self.index, target, pathlist_file, flags)
-        if ret:
+        if (ret := _lib.wimlib_extract_pathlist(self._wim_struct, self.index, target, pathlist_file, flags)):
             raise WimException(ret)
 
 
@@ -320,11 +293,11 @@ class Image(object):
         ex_desc = self.description if not ex_desc else ex_desc
         ex_name = ex_name.encode() if type(ex_name) is str else ex_name
         ex_desc = ex_desc.encode() if type(ex_desc) is str else ex_desc
-        ex_name = _backend.ffi.new("char[]", ex_name)
-        ex_desc = _backend.ffi.new("char[]", ex_desc)
+        ex_name = _ffi.new("char[]", ex_name)
+        ex_desc = _ffi.new("char[]", ex_desc)
 
-        if _backend.lib.wimlib_export_image(self._wim_struct,
-          self.index, ex_target._wim_struct, ex_name, ex_desc, flags):
+        if (ret := _lib.wimlib_export_image(self._wim_struct, self.index,
+                                      ex_target._wim_struct, ex_name, ex_desc, flags)):
             raise WimException(ret)
 
         self._wim_obj.images.refresh()
@@ -337,22 +310,22 @@ class DirEntry(object):
 
     @property
     def filename(self):
-        if self._dentry.filename != _backend.ffi.NULL:
-            return _backend.ffi.string(self._dentry.filename)
+        if self._dentry.filename != _ffi.NULL:
+            return _ffi.string(self._dentry.filename)
         return ''
 
 
     @property
     def dos_name(self):
-        if self._dentry.dos_name != _backend.ffi.NULL:
-            return _backend.ffi.string(self._dentry.dos_name)
+        if self._dentry.dos_name != _ffi.NULL:
+            return _ffi.string(self._dentry.dos_name)
         return ''
 
 
     @property
     def full_path(self):
-        if self._dentry.full_path != _backend.ffi.NULL:
-            return _backend.ffi.string(self._dentry.full_path)
+        if self._dentry.full_path != _ffi.NULL:
+            return _ffi.string(self._dentry.full_path)
         return ''
 
 

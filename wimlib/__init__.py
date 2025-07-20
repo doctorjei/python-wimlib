@@ -3,11 +3,13 @@ from wimlib.backend import WimBackend
 
 __version__ = "0.1.2"
 _backend = WimBackend()
+_lib = _backend.lib
+_ffi = _backend.ffi
 
 
 def wimlib_version():
     """ Get wimlib version number as tuple of (MAJOR, MINOR, PATCH) """
-    ver = _backend.lib.wimlib_get_version()
+    ver = _lib.wimlib_get_version()
     return (ver >> 20, (ver >> 10) & 0x3ff, ver & 0x3ff)
 
 
@@ -17,7 +19,7 @@ def initialize(init_flags=0):
 
 def shutdown():
     """ Cleanup function for wimlib, call is optional. """
-    _backend.lib.wimlib_global_cleanup()
+    _lib.wimlib_global_cleanup()
 
 
 class WimException(Exception):

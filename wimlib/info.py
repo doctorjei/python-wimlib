@@ -1,5 +1,4 @@
-from wimlib import _backend
-from wimlib import compression
+from wimlib import _ffi, compression
 import uuid
 
 CHANGE_READONLY_FLAG = 0x00000001
@@ -7,10 +6,10 @@ CHANGE_GUID = 0x00000002
 CHANGE_BOOT_INDEX = 0x00000004
 CHANGE_RPFIX_FLAG = 0x00000008
 
-class Info(object):
+class WimInfo(object):
     def __init__(self, info_struct=None):
         if not info_struct:
-            self._info_struct = _backend.ffi.new("struct wimlib_wim_info*")
+            self._info_struct = _ffi.new("struct wimlib_wim_info*")
         else:
             self._info_struct = info_struct
 
