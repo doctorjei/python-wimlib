@@ -1,3 +1,5 @@
+import logging
+
 import wimlib
 import wimlib.image
 import wimlib.info
@@ -118,6 +120,7 @@ class WIMFile(object):
         if (ret := _backend.lib.wimlib_get_wim_info(self._wim_struct, info)):
             raise WIMError(ret)
 
+        logging.debug(f"Fetched wim_info for {self._wim_struct} from backend.")
         return wimlib.info.Info(info)
 
 

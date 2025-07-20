@@ -35,5 +35,3 @@ def set_memory_allocator():
 
 
 initialize()
-
-
